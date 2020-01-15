@@ -1,0 +1,4 @@
+package ru.yandex.sashanc.services;
+
+public class GetFile {
+}

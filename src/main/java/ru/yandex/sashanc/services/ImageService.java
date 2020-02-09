@@ -1,70 +1,64 @@
 package ru.yandex.sashanc.services;
 
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import ru.yandex.sashanc.db.IimageDao;
+import ru.yandex.sashanc.db.ImageDaoImpl;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
-public class ImageService implements IImageService {
+public class ImageService implements IimageService {
+    private static final Logger logger = Logger.getLogger(ImageService.class);
 
     @Override
-    public void inputImageToSheet() {
-        try (InputStream isImage = new FileInputStream("E:\\work\\image1.jpg");
-             InputStream isExcel = new FileInputStream("E:\\work\\blank_complaint1.xlsx")) {
+    /**
+     * Метод получает в качестве параметров путь к файлу РА и список фото
+     *
+     */
+    public void inputImageToSheet(Path complaintPath, List<File> imageList, int notificationId) {
+        if(imageList.isEmpty()){
+            IimageDao imageDao = new ImageDaoImpl();
+            imageList = imageDao.getImageList(notificationId);
+        }
+        try (InputStream isExcel = new FileInputStream(complaintPath.toFile())) {
             XSSFWorkbook wb = new XSSFWorkbook(isExcel);
-            byte[] bytes = IOUtils.toByteArray(isImage);
-            int pictureIdx = wb.addPicture(bytes, Workbook.PICTURE_TYPE_JPEG);
-            CreationHelper helper = wb.getCreationHelper();
-            Sheet sheet = wb.getSheetAt(0);
-            Drawing drawing = sheet.createDrawingPatriarch();
-            ClientAnchor anchor = helper.createClientAnchor();
-            anchor.setCol1(2);
-            anchor.setRow1(73);
-            anchor.setCol2(24);
-            anchor.setRow2(89);
-            Picture pict = drawing.createPicture(anchor, pictureIdx);
-            FileOutputStream fileOut = new FileOutputStream("E:\\work\\blank_complaint1.xlsx");
+            List<Integer[]> imageMap = new ArrayList<>();
+            imageMap.add(new Integer[]{2, 73, 25, 92});
+            imageMap.add(new Integer[]{27, 73, 49, 92});
+            imageMap.add(new Integer[]{2, 93, 25, 112});
+            imageMap.add(new Integer[]{27, 93, 49, 112});
+            imageMap.add(new Integer[]{2, 117, 25, 136});
+            imageMap.add(new Integer[]{27, 117, 49, 136});
+            imageMap.add(new Integer[]{2, 137, 25, 156});
+            imageMap.add(new Integer[]{27, 137, 49, 156});
+            byte[] bytes;
+            int imageCounter = 0;
+            for (File imageFile : imageList) {
+                try (InputStream isImage = new FileInputStream(imageFile)) {
+                    bytes = IOUtils.toByteArray(isImage);
+                }
+                int pictureIdx = wb.addPicture(bytes, Workbook.PICTURE_TYPE_JPEG);
+                CreationHelper helper = wb.getCreationHelper();
+                Sheet sheet = wb.getSheetAt(0);
+                Drawing drawing = sheet.createDrawingPatriarch();
+                ClientAnchor anchor = helper.createClientAnchor();
+                anchor.setCol1(imageMap.get(imageCounter)[0]);
+                anchor.setRow1(imageMap.get(imageCounter)[1]);
+                anchor.setCol2(imageMap.get(imageCounter)[2]);
+                anchor.setRow2(imageMap.get(imageCounter)[3]);
+                Picture pict = drawing.createPicture(anchor, pictureIdx);
+                imageCounter++;
+            }
+            FileOutputStream fileOut = new FileOutputStream(complaintPath.toFile());
             wb.write(fileOut);
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-
-    }
-
-    @Override
-    public List<File> getImages(String path) {
-        Map<Integer, String> imageDir = new HashMap<>();
-        List<File> fileList = new ArrayList<>();
-        getFileList(path, fileList, imageDir);
-        for (Map.Entry<Integer, String> entry : imageDir.entrySet()){
-            System.out.println("Сообщение " + entry.getKey() + " путь " + entry.getValue());
-        }
-        return fileList;
-    }
-
-    //TODO Сначала автоматический поиск, если не указан путь; если указан путь, то искать в указанной папке.
-    //TODO Запускать поиск фотографий не всегда. Сначала искать а файле со списком сообщений, которые были найдены в предыдущем поиске.
-    //TODO Потом включать новый поиск и фиксировать найденные сообщения.
-    //TODO Дать возможность выбрать папку для фотографий вручную.
-    private void getFileList(String directoryName, List<File> files, Map<Integer, String> imageDir) {
-        File directory = new File(directoryName);
-        File[] fList = directory.listFiles();
-        for (File file : fList) {
-            if (file.isFile()) {
-                files.add(file);
-            } else if (file.isDirectory()) {
-                if(NumberUtils.isDigits(file.getName())){
-                    imageDir.put(Integer.parseInt(file.getName()), file.getAbsolutePath());
-                }
-                getFileList(file.getAbsolutePath(), files, imageDir);
-            }
         }
     }
 }

@@ -1,12 +1,14 @@
 package ru.yandex.sashanc.pojo;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
 
 public class Notification {
+    //Поля QM
     private String notType;
     private int notId;
-    private Date notDate;
+    private LocalDate notDate;
     private String materialNumber;
     private String materialDesSap;
     //TODO данной колонки нет в формате ZFKAMA
@@ -16,9 +18,38 @@ public class Notification {
     private String notStatus;
     private int supplierNumber;
     private String supplierName;
-    private int purchasingDoc;
+    //Поле для связи двух файлов MB51 и QM
+    private String purchasingDoc;
+    //Поля из MB51
     private String deliveryNote;
-    private Date deliveryNoteDate;
+    private LocalDate deliveryNoteDate;
+    private LocalDate postDate;
+    private String invoice;
+    private String imageLink;
+
+    public String getImageLink() {
+        return imageLink;
+    }
+
+    public void setImageLink(String imageLink) {
+        this.imageLink = imageLink;
+    }
+
+    public String getInvoice() {
+        return invoice;
+    }
+
+    public void setInvoice(String invoice) {
+        this.invoice = invoice;
+    }
+
+    public LocalDate getPostDate() {
+        return postDate;
+    }
+
+    public void setPostDate(LocalDate postDate) {
+        this.postDate = postDate;
+    }
 
     public String getDeliveryNote() {
         return deliveryNote;
@@ -28,19 +59,19 @@ public class Notification {
         this.deliveryNote = deliveryNote;
     }
 
-    public Date getDeliveryNoteDate() {
+    public LocalDate getDeliveryNoteDate() {
         return deliveryNoteDate;
     }
 
-    public void setDeliveryNoteDate(Date deliveryNoteDate) {
+    public void setDeliveryNoteDate(LocalDate deliveryNoteDate) {
         this.deliveryNoteDate = deliveryNoteDate;
     }
 
-    public int getPurchasingDoc() {
+    public String getPurchasingDoc() {
         return purchasingDoc;
     }
 
-    public void setPurchasingDoc(int purchasingDoc) {
+    public void setPurchasingDoc(String purchasingDoc) {
         this.purchasingDoc = purchasingDoc;
     }
 
@@ -86,11 +117,11 @@ public class Notification {
         this.notId = notId;
     }
 
-    public Date getNotDate() {
+    public LocalDate getNotDate() {
         return notDate;
     }
 
-    public void setNotDate(Date notDate) {
+    public void setNotDate(LocalDate notDate) {
         this.notDate = notDate;
     }
 

@@ -1,4 +1,7 @@
 package ru.yandex.sashanc.services;
 
-public class IGetFile {
+import java.io.File;
+
+public interface IGetFile {
+    File getFile();
 }

@@ -10,17 +10,18 @@ import ru.yandex.sashanc.Main;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Iterator;
 
 public class Service {
     private static final Logger logger = Logger.getLogger(Main.class);
 
-    public void createComplaintDocs(String fileNameSap, String fileName1C) {
+    public void createComplaintDocs(Path fileNameSap, Path fileName1C) {
         getDataSap(fileNameSap);
     }
 
-    public void getDataSap(String fileNameSap) {
-        try (XSSFWorkbook workbookSap = new XSSFWorkbook(new FileInputStream(fileNameSap))) {
+    public void getDataSap(Path fileNameSap) {
+        try (XSSFWorkbook workbookSap = new XSSFWorkbook(new FileInputStream(fileNameSap.toFile()))) {
             XSSFSheet sheetA = workbookSap.getSheetAt(0);
             Iterator rowIter = sheetA.rowIterator();
             Object cellValue = "";
@@ -52,7 +53,7 @@ public class Service {
                         }
                     }
 
-                    logger.info(rowA.getRowNum() + " " + cellA.getColumnIndex() + "  " + cellValue);
+//                    logger.info(rowA.getRowNum() + " " + cellA.getColumnIndex() + "  " + cellValue);
                 }
             }
         } catch (FileNotFoundException e) {

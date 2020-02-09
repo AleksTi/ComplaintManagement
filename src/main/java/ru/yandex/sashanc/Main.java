@@ -13,7 +13,6 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         logger.info("Started start()");
-        System.out.println("Started start()");
         logger.info(getClass().getResource("/views/sample.fxml").getPath());
         Parent root = FXMLLoader.load(getClass().getResource("/views/sample.fxml"));
         primaryStage.setTitle("Complaint Managment");

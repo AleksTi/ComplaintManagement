@@ -1,23 +1,38 @@
 package ru.yandex.sashanc.pojo;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 public class Complaint {
+    //Property are used in report
+    private LocalDate compDate;
     private String compNumber;
-    private Date compDate;
-    private String compContract;
-    private Date compContractDate;
-    private String typeGB;
-    private String invoice;
-    private Date shippingDate;
-    private Date deliveryDate;
-    private Date detectionDate;
+    //TODO Заменить на List<Integer>
+    private String relNotList;
+    private String placeDetected;
     private String partNumber;
     private String partDescription;
-    private String deviationDescription;
     private int defectQuantity;
-    private List<Integer> relNotList;
+    private int defectQuantityToPpm;
+    private String deviationDescription;
+    private String link;
+    private String invoice;
+    private LocalDate shippingDate;
+    private LocalDate deliveryDate;
+    private LocalDate detectionDate;
+    private LocalDate report8dReceived;
+    private LocalDate getReport8dClosed;
+    private double totalCost;
+    private String extraDelivery;
+    private LocalDate paymentDate;
+    private double paidCost;
+    private String decision;
+    private String annotation;
+
+    //Property are used in complaint
+    private String compContract;
+    private LocalDate compContractDate;
+    private String typeGB;
     private String action1;
     private String action2;
     private String action3;
@@ -25,6 +40,144 @@ public class Complaint {
     private int serviceCost;
     private int deliveryCost;
 
+
+    //Property for instance
+    private long supplierId;
+    private String status;
+
+
+
+    public Complaint(){
+    }
+
+    public Complaint(LocalDate compDate, String compNumber, String relNotList, String placeDetected, String partNumber, String partDescription, int defectQuantity, int defectQuantityToPpm, String deviationDescription, String link, String invoice, LocalDate shippingDate, LocalDate deliveryDate, LocalDate detectionDate, double totalCost, String extraDelivery, double paidCost, String decision, String annotation) {
+        this.compDate = compDate;
+        this.compNumber = compNumber;
+        this.relNotList = relNotList;
+        this.placeDetected = placeDetected;
+        this.partNumber = partNumber;
+        this.partDescription = partDescription;
+        this.defectQuantity = defectQuantity;
+        this.defectQuantityToPpm = defectQuantityToPpm;
+        this.deviationDescription = deviationDescription;
+        this.link = link;
+        this.invoice = invoice;
+        this.shippingDate = shippingDate;
+        this.deliveryDate = deliveryDate;
+        this.detectionDate = detectionDate;
+//        this.report8dReceived = report8dReceived;
+//        this.getReport8dClosed = getReport8dClosed;
+        this.totalCost = totalCost;
+        this.extraDelivery = extraDelivery;
+//        this.paymentDate = paymentDate;
+        this.paidCost = paidCost;
+        this.decision = decision;
+        this.annotation = annotation;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public long getSupplierId() {
+        return supplierId;
+    }
+
+    public void setSupplierId(int supplierId) {
+        this.supplierId = supplierId;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
+
+    public LocalDate getReport8dReceived() {
+        return report8dReceived;
+    }
+
+    public void setReport8dReceived(LocalDate report8dReceived) {
+        this.report8dReceived = report8dReceived;
+    }
+
+    public LocalDate getGetReport8dClosed() {
+        return getReport8dClosed;
+    }
+
+    public void setGetReport8dClosed(LocalDate getReport8dClosed) {
+        this.getReport8dClosed = getReport8dClosed;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    public void setTotalCost(double totalCost) {
+        this.totalCost = totalCost;
+    }
+
+    public String getExtraDelivery() {
+        return extraDelivery;
+    }
+
+    public void setExtraDelivery(String extraDelivery) {
+        this.extraDelivery = extraDelivery;
+    }
+
+    public LocalDate getPaymentDate() {
+        return paymentDate;
+    }
+
+    public void setPaymentDate(LocalDate paymentDate) {
+        this.paymentDate = paymentDate;
+    }
+
+    public double getPaidCost() {
+        return paidCost;
+    }
+
+    public void setPaidCost(double paidCost) {
+        this.paidCost = paidCost;
+    }
+
+    public String getDecision() {
+        return decision;
+    }
+
+    public void setDecision(String decision) {
+        this.decision = decision;
+    }
+
+    public String getAnnotation() {
+        return annotation;
+    }
+
+    public void setAnnotation(String annotation) {
+        this.annotation = annotation;
+    }
+
+    public int getDefectQuantityToPpm() {
+        return defectQuantityToPpm;
+    }
+
+    public void setDefectQuantityToPpm(int defectQuantityToPpm) {
+        this.defectQuantityToPpm = defectQuantityToPpm;
+    }
+
+    public String getPlaceDetected() {
+        return placeDetected;
+    }
+
+    public void setPlaceDetected(String placeDetected) {
+        this.placeDetected = placeDetected;
+    }
 
     public String getCompNumber() {
         return compNumber;
@@ -34,11 +187,11 @@ public class Complaint {
         this.compNumber = compNumber;
     }
 
-    public Date getCompDate() {
+    public LocalDate getCompDate() {
         return compDate;
     }
 
-    public void setCompDate(Date compDate) {
+    public void setCompDate(LocalDate compDate) {
         this.compDate = compDate;
     }
 
@@ -50,11 +203,11 @@ public class Complaint {
         this.compContract = compContract;
     }
 
-    public Date getCompContractDate() {
+    public LocalDate getCompContractDate() {
         return compContractDate;
     }
 
-    public void setCompContractDate(Date compContractDate) {
+    public void setCompContractDate(LocalDate compContractDate) {
         this.compContractDate = compContractDate;
     }
 
@@ -74,27 +227,27 @@ public class Complaint {
         this.invoice = invoice;
     }
 
-    public Date getShippingDate() {
+    public LocalDate getShippingDate() {
         return shippingDate;
     }
 
-    public void setShippingDate(Date shippingDate) {
+    public void setShippingDate(LocalDate shippingDate) {
         this.shippingDate = shippingDate;
     }
 
-    public Date getDeliveryDate() {
+    public LocalDate getDeliveryDate() {
         return deliveryDate;
     }
 
-    public void setDeliveryDate(Date deliveryDate) {
+    public void setDeliveryDate(LocalDate deliveryDate) {
         this.deliveryDate = deliveryDate;
     }
 
-    public Date getDetectionDate() {
+    public LocalDate getDetectionDate() {
         return detectionDate;
     }
 
-    public void setDetectionDate(Date detectionDate) {
+    public void setDetectionDate(LocalDate detectionDate) {
         this.detectionDate = detectionDate;
     }
 
@@ -130,11 +283,11 @@ public class Complaint {
         this.defectQuantity = defectQuantity;
     }
 
-    public List<Integer> getRelNotList() {
+    public String getRelNotList() {
         return relNotList;
     }
 
-    public void setRelNotList(List<Integer> relNotList) {
+    public void setRelNotList(String relNotList) {
         this.relNotList = relNotList;
     }
 

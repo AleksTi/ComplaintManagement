@@ -5,11 +5,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
-import ru.yandex.sashanc.Main;
-import ru.yandex.sashanc.db.ComplaintDao;
+import ru.yandex.sashanc.db.ComplaintDaoImpl;
 import ru.yandex.sashanc.db.IComplaintDao;
 import ru.yandex.sashanc.db.NotificationDao;
 import ru.yandex.sashanc.db.connection.ConnectionManagerImpl;
@@ -23,10 +21,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -72,51 +66,6 @@ public class Controller {
 
     @FXML
     private TableView<Complaint> claimTable;
-
-    @FXML
-    private TableColumn<Notification, String> c0;
-
-    @FXML
-    private TableColumn<Notification, Integer> c1;
-
-    @FXML
-    private TableColumn<Notification, LocalDate> c2;
-
-    @FXML
-    private TableColumn<Notification, String> c3;
-
-    @FXML
-    private TableColumn<Notification, String> c4;
-
-    @FXML
-    private TableColumn<Notification, String> c5;
-
-    @FXML
-    private TableColumn<Notification, Integer> c6;
-
-    @FXML
-    private TableColumn<Notification, String> c7;
-
-    @FXML
-    private TableColumn<Notification, String> c8;
-
-    @FXML
-    private TableColumn<Notification, Integer> c9;
-
-    @FXML
-    private TableColumn<Notification, String> c10;
-
-    @FXML
-    private TableColumn<Notification, String> c11;
-
-    @FXML
-    private TableColumn<Notification, String> c12;
-
-    @FXML
-    private TableColumn<Notification, LocalDate> c13;
-
-    @FXML
-    private TableColumn<Notification, LocalDate> c14;
 
     @FXML
     private DatePicker complaintDateUser;
@@ -182,7 +131,7 @@ public class Controller {
         });
 
         complaintsFromDb.setOnAction(event -> {
-            IComplaintDao complDao = new ComplaintDao();
+            IComplaintDao complDao = new ComplaintDaoImpl();
             List<Complaint> complaintList = complDao.getComplaintList();
             Field[] fields = Complaint.class.getDeclaredFields();
             logger.info("fields = " + fields.length);
@@ -235,21 +184,36 @@ public class Controller {
     }
 
     private void setCellTypeValues(){
-        c0.setCellValueFactory(new PropertyValueFactory<Notification, String>("notType"));
-        c1.setCellValueFactory(new PropertyValueFactory<Notification, Integer>("notId"));
-        c2.setCellValueFactory(new PropertyValueFactory<Notification, LocalDate>("notDate"));
-        c3.setCellValueFactory(new PropertyValueFactory<Notification, String>("materialNumber"));
-        c4.setCellValueFactory(new PropertyValueFactory<Notification, String>("materialDesSap"));
-        c5.setCellValueFactory(new PropertyValueFactory<Notification, String>("supplierName"));
-        c6.setCellValueFactory(new PropertyValueFactory<Notification, Integer>("complaintQuantity"));
-        c7.setCellValueFactory(new PropertyValueFactory<Notification, String>("defectDescription"));
-        c8.setCellValueFactory(new PropertyValueFactory<Notification, String>("notStatus"));
-        c9.setCellValueFactory(new PropertyValueFactory<Notification, Integer>("supplierNumber"));
-        c10.setCellValueFactory(new PropertyValueFactory<Notification, String>("materialDesUser"));
-        c11.setCellValueFactory(new PropertyValueFactory<Notification, String>("purchasingDoc"));
-        c12.setCellValueFactory(new PropertyValueFactory<Notification, String>("deliveryNote"));
-        c13.setCellValueFactory(new PropertyValueFactory<Notification, LocalDate>("deliveryNoteDate"));
-        c14.setCellValueFactory(new PropertyValueFactory<Notification, LocalDate>("postDate"));
+        Field[] fields = Notification.class.getDeclaredFields();
+        logger.info("Notification fields = " + fields.length);
+        for (Field field : fields) {
+            TableColumn tableColumn = new TableColumn();
+            tableColumn.setId(field.getName());
+            tableColumn.setText(field.getName());
+            tableColumn.setMaxWidth(500);
+            tableColumn.setEditable(true);
+            PropertyValueFactory<Notification, ?> pvf = new PropertyValueFactory<>(field.getName());
+            tableColumn.setCellValueFactory(pvf);
+            logger.info("Notification field.getName() = " + field.getName());
+            notTable.getColumns().add(tableColumn);
+        }
+
+
+//        c0.setCellValueFactory(new PropertyValueFactory<Notification, String>("notType"));
+//        c1.setCellValueFactory(new PropertyValueFactory<Notification, Integer>("notId"));
+//        c2.setCellValueFactory(new PropertyValueFactory<Notification, LocalDate>("notDate"));
+//        c3.setCellValueFactory(new PropertyValueFactory<Notification, String>("materialNumber"));
+//        c4.setCellValueFactory(new PropertyValueFactory<Notification, String>("materialDesSap"));
+//        c5.setCellValueFactory(new PropertyValueFactory<Notification, String>("supplierName"));
+//        c6.setCellValueFactory(new PropertyValueFactory<Notification, Integer>("complaintQuantity"));
+//        c7.setCellValueFactory(new PropertyValueFactory<Notification, String>("defectDescription"));
+//        c8.setCellValueFactory(new PropertyValueFactory<Notification, String>("notStatus"));
+//        c9.setCellValueFactory(new PropertyValueFactory<Notification, Integer>("supplierNumber"));
+//        c10.setCellValueFactory(new PropertyValueFactory<Notification, String>("materialDesUser"));
+//        c11.setCellValueFactory(new PropertyValueFactory<Notification, String>("purchasingDoc"));
+//        c12.setCellValueFactory(new PropertyValueFactory<Notification, String>("deliveryNote"));
+//        c13.setCellValueFactory(new PropertyValueFactory<Notification, LocalDate>("deliveryNoteDate"));
+//        c14.setCellValueFactory(new PropertyValueFactory<Notification, LocalDate>("postDate"));
     }
 
     private void initData(List<Notification> notList) {
@@ -263,14 +227,12 @@ public class Controller {
         File selectedFile = fc.showOpenDialog(null);
         if (selectedFile != null){
             textField.setText(selectedFile.getAbsolutePath());
-            System.out.println(selectedFile.getName());
         } else {
-            System.out.println("File not found");
+            logger.info("File not found");
         }
     }
 
     private List<File> getImageFiles(){
-
         FileChooser fc = new FileChooser();
         fc.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("JPG", "*.jpg"),

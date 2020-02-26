@@ -1,7 +1,6 @@
 package ru.yandex.sashanc.pojo;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public class Complaint {
     //Property are used in report
@@ -11,7 +10,9 @@ public class Complaint {
     private String relNotList;
     private String placeDetected;
     private String partNumber;
-    private String partDescription;
+    private String partNameRu;
+    private String partNameEn;
+
     private int defectQuantity;
     private int defectQuantityToPpm;
     private String deviationDescription;
@@ -40,39 +41,24 @@ public class Complaint {
     private int serviceCost;
     private int deliveryCost;
 
-
     //Property for instance
-    private long supplierId;
+    private int supplierId;
     private String status;
 
-
-
-    public Complaint(){
+    public String getPartNameRu() {
+        return partNameRu;
     }
 
-    public Complaint(LocalDate compDate, String compNumber, String relNotList, String placeDetected, String partNumber, String partDescription, int defectQuantity, int defectQuantityToPpm, String deviationDescription, String link, String invoice, LocalDate shippingDate, LocalDate deliveryDate, LocalDate detectionDate, double totalCost, String extraDelivery, double paidCost, String decision, String annotation) {
-        this.compDate = compDate;
-        this.compNumber = compNumber;
-        this.relNotList = relNotList;
-        this.placeDetected = placeDetected;
-        this.partNumber = partNumber;
-        this.partDescription = partDescription;
-        this.defectQuantity = defectQuantity;
-        this.defectQuantityToPpm = defectQuantityToPpm;
-        this.deviationDescription = deviationDescription;
-        this.link = link;
-        this.invoice = invoice;
-        this.shippingDate = shippingDate;
-        this.deliveryDate = deliveryDate;
-        this.detectionDate = detectionDate;
-//        this.report8dReceived = report8dReceived;
-//        this.getReport8dClosed = getReport8dClosed;
-        this.totalCost = totalCost;
-        this.extraDelivery = extraDelivery;
-//        this.paymentDate = paymentDate;
-        this.paidCost = paidCost;
-        this.decision = decision;
-        this.annotation = annotation;
+    public void setPartNameRu(String partNameRu) {
+        this.partNameRu = partNameRu;
+    }
+
+    public String getPartNameEn() {
+        return partNameEn;
+    }
+
+    public void setPartNameEn(String partNameEn) {
+        this.partNameEn = partNameEn;
     }
 
     public String getStatus() {
@@ -257,14 +243,6 @@ public class Complaint {
 
     public void setPartNumber(String partNumber) {
         this.partNumber = partNumber;
-    }
-
-    public String getPartDescription() {
-        return partDescription;
-    }
-
-    public void setPartDescription(String partDescription) {
-        this.partDescription = partDescription;
     }
 
     public String getDeviationDescription() {

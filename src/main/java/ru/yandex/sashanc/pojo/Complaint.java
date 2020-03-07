@@ -1,21 +1,22 @@
 package ru.yandex.sashanc.pojo;
 
 import java.time.LocalDate;
+import java.util.List;
 
-public class Complaint {
+public class Complaint implements Cloneable {
     //Property are used in report
     private LocalDate compDate;
     private String compNumber;
-    //TODO Заменить на List<Integer>
-    private String relNotList;
+    private List<Integer> relNotList;
     private String placeDetected;
     private String partNumber;
     private String partNameRu;
     private String partNameEn;
-
     private int defectQuantity;
     private int defectQuantityToPpm;
-    private String deviationDescription;
+    private String deviationDescriptionSap;
+    private String deviationDescriptionRu;
+    private String deviationDescriptionEn;
     private String link;
     private String invoice;
     private LocalDate shippingDate;
@@ -44,6 +45,14 @@ public class Complaint {
     //Property for instance
     private int supplierId;
     private String status;
+
+    public String getDeviationDescriptionSap() {
+        return deviationDescriptionSap;
+    }
+
+    public void setDeviationDescriptionSap(String deviationDescriptionSap) {
+        this.deviationDescriptionSap = deviationDescriptionSap;
+    }
 
     public String getPartNameRu() {
         return partNameRu;
@@ -245,12 +254,20 @@ public class Complaint {
         this.partNumber = partNumber;
     }
 
-    public String getDeviationDescription() {
-        return deviationDescription;
+    public String getDeviationDescriptionRu() {
+        return deviationDescriptionRu;
     }
 
-    public void setDeviationDescription(String deviationDescription) {
-        this.deviationDescription = deviationDescription;
+    public void setDeviationDescriptionRu(String deviationDescriptionRu) {
+        this.deviationDescriptionRu = deviationDescriptionRu;
+    }
+
+    public String getDeviationDescriptionEn() {
+        return deviationDescriptionEn;
+    }
+
+    public void setDeviationDescriptionEn(String deviationDescriptionEn) {
+        this.deviationDescriptionEn = deviationDescriptionEn;
     }
 
     public int getDefectQuantity() {
@@ -261,11 +278,11 @@ public class Complaint {
         this.defectQuantity = defectQuantity;
     }
 
-    public String getRelNotList() {
+    public List<Integer> getRelNotList() {
         return relNotList;
     }
 
-    public void setRelNotList(String relNotList) {
+    public void setRelNotList(List<Integer> relNotList) {
         this.relNotList = relNotList;
     }
 

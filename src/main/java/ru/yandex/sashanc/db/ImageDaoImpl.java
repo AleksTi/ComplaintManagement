@@ -5,6 +5,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import ru.yandex.sashanc.db.connection.ConnectionManagerImpl;
 import ru.yandex.sashanc.db.connection.IConnectionManager;
+import ru.yandex.sashanc.pojo.Notification;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -63,7 +64,7 @@ public class ImageDaoImpl implements IimageDao {
         File imagesDir = new File(imagePath.toString());
         if(imagesDir.exists()) {
             File[] fileList = imagesDir.listFiles();
-            if(fileList.length == 0) {
+            if(fileList.length != 0) {
                 for (File file : fileList) {
                     if (file.isFile()) {
                         if (FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("jpg") ||
@@ -162,5 +163,25 @@ public class ImageDaoImpl implements IimageDao {
             logger.info(e);
         }
         return getImagePathDefault;
+    }
+
+    public Map<Integer, Path> getImagesPathsDB(){
+        logger.info("Method getImagePathFromDb(int notId) is launched...");
+        Map<Integer, Path> imageMap = new HashMap<>();
+        try (Connection connection = conManager.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement("SELECT id, imageLink FROM notifications")) {
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        imageMap.put(
+                                resultSet.getInt("id"),
+                                Paths.get(resultSet.getString("imageLink"))
+                        );
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            logger.info(e);
+        }
+        return imageMap;
     }
 }

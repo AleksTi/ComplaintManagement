@@ -1,9 +1,16 @@
 package ru.yandex.sashanc.controllers;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
@@ -15,13 +22,18 @@ import ru.yandex.sashanc.db.connection.IConnectionManager;
 import ru.yandex.sashanc.pojo.Complaint;
 import ru.yandex.sashanc.pojo.Notification;
 import ru.yandex.sashanc.services.ComplaintService;
+import ru.yandex.sashanc.services.IComplaintService;
+import ru.yandex.sashanc.services.NotificationService;
 import ru.yandex.sashanc.services.Service;
 
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,9 +45,7 @@ public class Controller {
     private Path fileNameSapQM;
     private Path fileNameSapMB51;
     private List<File> imageFileList;
-    private IConnectionManager conManager = ConnectionManagerImpl.getInstance();
-
-
+    private List<Notification> notifications;
 
     @FXML
     private TextField fieldSapMB51;
@@ -94,10 +104,15 @@ public class Controller {
     @FXML
     private Label imageChosenDirLabel;
 
+    @FXML
+    private Button openImagesFolder;
 
 
     @FXML
     void initialize(){
+        setNotTableMultiple();
+        setComplaintTableColumns();
+
         chooseImageFolderButton.setOnAction(event -> {
             List<File> fileList = getImageFiles();
             if(!fileList.isEmpty()){
@@ -109,6 +124,29 @@ public class Controller {
             }
         });
 
+        openImagesFolder.setOnAction(event -> {
+            Desktop desktop = null;
+            if (Desktop.isDesktopSupported()) {
+                desktop = Desktop.getDesktop();
+            }
+            try {
+                if (notTable.getSelectionModel().getSelectedItems().get(0) != null &&
+                        !notTable.getSelectionModel().getSelectedItems().get(0).getImageLink().toString().equals("")) {
+                    File imagesDirectory = new File(notTable.getSelectionModel().getSelectedItems().get(0).getImageLink().toString());
+                    if (imagesDirectory.exists()) {
+                        desktop.open(imagesDirectory);
+                        imageChosenDirLabel.setText("");
+                    } else {
+                        imageChosenDirLabel.setText("Папка с изображениями не найдена");
+                    }
+                } else {
+                    imageChosenDirLabel.setText("Папка с изображениями не найдена");
+                }
+            } catch (IOException ioe) {
+                logger.info(ioe);
+            }
+        });
+
         getFileMB51.setOnAction(event -> getFile(fieldSapMB51));
 
         selectFile.setOnAction(event -> getFile(fieldSap));
@@ -116,38 +154,20 @@ public class Controller {
         createDocs.setOnAction(event -> {
             fileNameSapQM = Paths.get(fieldSap.getText().trim());
             fileNameSapMB51 = Paths.get(fieldSapMB51.getText().trim());
-
-            File file = new File(fileNameSapQM.toString());
-            System.out.println("file: " + fileNameSapQM.toString());
-            if(file.exists()){
-                new Service().createComplaintDocs(fileNameSapQM, fileNameSapMB51);
+            if(new File(fileNameSapQM.toString()).exists()){
                 setCellTypeValues();
-                initData(new NotificationDao().getListNotifications(fileNameSapQM, fileNameSapMB51));
+                notificationsData.addAll(new NotificationService().getListNotifications(fileNameSapQM, fileNameSapMB51));
                 notTable.setItems(notificationsData);
                 infoLabel.setText("");
             } else {
-                infoLabel.setText("Поля не заполнены!");
+                infoLabel.setText("Поле \"Имя файла SAP QM\" не заполнено!");
             }
         });
 
         complaintsFromDb.setOnAction(event -> {
             IComplaintDao complDao = new ComplaintDaoImpl();
             List<Complaint> complaintList = complDao.getComplaintList();
-            Field[] fields = Complaint.class.getDeclaredFields();
-            logger.info("fields = " + fields.length);
-            for (Field field : fields) {
-                TableColumn tableColumn = new TableColumn();
-                tableColumn.setId(field.getName());
-                tableColumn.setText(field.getName());
-                tableColumn.setMaxWidth(500);
-                tableColumn.setEditable(true);
-                tableColumn.setCellValueFactory(new PropertyValueFactory(field.getName()));
-                logger.info("field.getName() = " + field.getName());
-                claimTable.getColumns().add(tableColumn);
-            }
-            for (Complaint complaint : complaintList) {
-                complaintsData.add(complaint);
-            }
+            complaintsData.addAll(complaintList);
             claimTable.setItems(complaintsData);
         });
 
@@ -159,28 +179,68 @@ public class Controller {
             logger.info("CheckBox переключен");
         });
 
+        /**
+         * Метод отрабатывает событие на нажатие кнопки "Создать РА"
+         */
         createComplaint.setOnAction(event -> {
-            boolean isImageAdd = imageAdd.isSelected();
-            LocalDate date;
-            if (complaintDateUser.getValue() != null) {
-                date = complaintDateUser.getValue();
+            if (checkNotSuppliersId()) {
+                LocalDate date;
+                if (complaintDateUser.getValue() != null) {
+                    date = complaintDateUser.getValue();
+                } else {
+                    date = LocalDate.now();
+                }
+                List<File> fileList;
+                if (imageFileList == null) {
+                    fileList = Collections.emptyList();
+                } else {
+                    fileList = imageFileList;
+                }
+                IComplaintService complaintService = new ComplaintService();
+                complaintsData.addAll(complaintService.generateComplaint(
+                        notTable.getSelectionModel().getSelectedItems(),
+                        complDescRu.getText(),
+                        complDescEn.getText(),
+                        date,
+                        imageAdd.isSelected(),
+                        complaintType.getValue(),
+                        fileList));
+                claimTable.setItems(complaintsData);
             } else {
-                date = LocalDate.now();
+                infoLabelBottom.setText("Выбраны сообщения для разных поставщиков");
             }
-            List<File> fileList;
-            if(imageFileList == null){
-                fileList = Collections.emptyList();
-            } else {
-                fileList = imageFileList;
-            }
-            Notification not = notTable.getSelectionModel().getSelectedItem();
-            String complaintDescriptionRu = complDescRu.getText();
-            String complaintDescriptionEn = complDescEn.getText();
-            String typeComplaint = complaintType.getValue();
-            infoLabelBottom.setText("Дата РА: " + date.toString() + ", номер сообщения: " + not.getNotId());
-            ComplaintService complaintService = new ComplaintService();
-            complaintService.generateComplaint(not, complaintDescriptionRu, complaintDescriptionEn, date, isImageAdd, typeComplaint, fileList);
         });
+    }
+
+    private void setNotTableMultiple(){
+        notTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        notifications = new ArrayList<>();
+        ListChangeListener<Notification> multiSelection = changed -> {
+            infoLabelBottom.setText("");
+            while (changed.next()){
+                notifications.clear();
+                notifications.addAll(changed.getList());
+            }
+//            for (Notification n : notifications) {
+//                logger.info(notifications.size() + " " + n.getNotId() + " " + notifications.indexOf(n));
+//            }
+        };
+        notTable.getSelectionModel().getSelectedItems().addListener(multiSelection);
+    }
+
+    private void setComplaintTableColumns(){
+        Field[] fields = Complaint.class.getDeclaredFields();
+        logger.info("Complaint fields = " + fields.length);
+        for (Field field : fields) {
+            TableColumn tableColumn = new TableColumn();
+            tableColumn.setId(field.getName());
+            tableColumn.setText(field.getName());
+            tableColumn.setMaxWidth(500);
+            tableColumn.setEditable(true);
+            tableColumn.setCellValueFactory(new PropertyValueFactory(field.getName()));
+            logger.info("Complaint field.getName() = " + field.getName());
+            claimTable.getColumns().add(tableColumn);
+        }
     }
 
     private void setCellTypeValues(){
@@ -189,8 +249,10 @@ public class Controller {
         for (Field field : fields) {
             TableColumn tableColumn = new TableColumn();
             tableColumn.setId(field.getName());
+            //TODO Сделать вывод имён корректным
             tableColumn.setText(field.getName());
-            tableColumn.setMaxWidth(500);
+            //TODO Сделать ширину не жёсткой
+            tableColumn.setPrefWidth(150);
             tableColumn.setEditable(true);
             PropertyValueFactory<Notification, ?> pvf = new PropertyValueFactory<>(field.getName());
             tableColumn.setCellValueFactory(pvf);
@@ -216,12 +278,6 @@ public class Controller {
 //        c14.setCellValueFactory(new PropertyValueFactory<Notification, LocalDate>("postDate"));
     }
 
-    private void initData(List<Notification> notList) {
-        for (Notification not : notList) {
-            notificationsData.add(not);
-        }
-    }
-
     private void getFile(TextField textField){
         FileChooser fc = new FileChooser();
         File selectedFile = fc.showOpenDialog(null);
@@ -244,5 +300,17 @@ public class Controller {
             logger.info("File not found");
         }
         return selectedFiles;
+    }
+
+    private boolean checkNotSuppliersId(){
+        boolean isChecked = true;
+        int supplierNumber = notifications.get(0).getSupplierNumber();
+        for (Notification n : notifications){
+            if(supplierNumber != n.getSupplierNumber()){
+                isChecked = false;
+                break;
+            }
+        }
+        return isChecked;
     }
 }

@@ -1,22 +1,23 @@
 package ru.yandex.sashanc.db;
 
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.cell.PropertyValueFactory;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import ru.yandex.sashanc.db.connection.ConnectionManagerImpl;
 import ru.yandex.sashanc.db.connection.IConnectionManager;
 import ru.yandex.sashanc.pojo.Complaint;
+import ru.yandex.sashanc.pojo.Contract;
+import ru.yandex.sashanc.pojo.Employee;
 import ru.yandex.sashanc.pojo.Property;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -93,7 +94,7 @@ public class ComplaintDaoImpl implements IComplaintDao {
      * Метод возвращает путь для хранения имени файлов документов РА
      */
     @Override
-    public Path getNewComplaintPath(int supplierNumber, String newComplaintNumber) {
+    public Path getComplaintsPath(int supplierNumber) {
         logger.info("Method getNewComplaintPath(int supplierNumber) is launched...");
         String complFilePath = "";
         String shortName = "";
@@ -117,7 +118,7 @@ public class ComplaintDaoImpl implements IComplaintDao {
             logger.info(e);
         }
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy");
-        return Paths.get(complFilePath + "\\" + LocalDate.now().format(dtf) + "\\" + shortName + "\\" + newComplaintNumber + "\\" + newComplaintNumber + ".xlsx");
+        return Paths.get(complFilePath + "\\" + LocalDate.now().format(dtf) + "\\" + shortName);
     }
 
     /**
@@ -241,7 +242,8 @@ public class ComplaintDaoImpl implements IComplaintDao {
                             //TODO сделать парсер строки на номера Сообщений
                             complaint.setCompNumber(row.getCell(1).getStringCellValue());
                             logger.info("Complaint RelNotList: " + row.getCell(2).getStringCellValue());
-                            complaint.setRelNotList(row.getCell(2).getStringCellValue());
+                            //TODO сделать парсер номеров сообщений из строки
+//                            complaint.setRelNotList(row.getCell(2).getStringCellValue());
                             logger.info("Complaint PlaceDetected: " + row.getCell(3).getStringCellValue());
                             complaint.setPlaceDetected(row.getCell(3).getStringCellValue());
                             logger.info("Complaint PartNumber: " + row.getCell(5).getStringCellValue());
@@ -254,7 +256,8 @@ public class ComplaintDaoImpl implements IComplaintDao {
                             logger.info("Complaint DefectQuantityToPpm: " + (int) row.getCell(7).getNumericCellValue());
                             complaint.setDefectQuantityToPpm((int) row.getCell(7).getNumericCellValue());
                             logger.info("Complaint DeviationDescription: " + row.getCell(8).getStringCellValue());
-                            complaint.setDeviationDescription(row.getCell(8).getStringCellValue());
+                            //TODO сделать настройку на EN
+                            complaint.setDeviationDescriptionRu(row.getCell(8).getStringCellValue());
                             logger.info("Complaint Link: " + row.getCell(9).getStringCellValue());
                             complaint.setLink(row.getCell(9).getStringCellValue());
                             logger.info("Complaint Invoice: " + invoice);
@@ -330,5 +333,93 @@ public class ComplaintDaoImpl implements IComplaintDao {
             logger.info("getComplaintNameList(Path pathList):  Дата " + complaint.getCompDate() + ", Номер рекламации: " + complaint.getCompNumber());
         }
         return complaints;
+    }
+
+    public void insertDataComplaintExcel(List<Complaint> complaints, Contract contract, Map<String, Employee> employees, Path complaintPath){
+        Complaint complaint = complaints.get(0);
+        InputStream complBlank = getClass().getResourceAsStream("/blanks/blank_complaint.xlsx");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        try (XSSFWorkbook wbComplBlank = new XSSFWorkbook(complBlank)) {
+            XSSFFont fontItalic = wbComplBlank.createFont();
+            fontItalic.setItalic(true);
+            fontItalic.setFontName("Times New Roman");
+            fontItalic.setFontHeightInPoints((short) 14);
+            XSSFRichTextString cellValuePartName = new XSSFRichTextString();
+            cellValuePartName.append(complaint.getPartNameRu());
+            cellValuePartName.append("\n" + complaint.getPartNameEn().toUpperCase(), fontItalic);
+            XSSFSheet sheetA = wbComplBlank.getSheetAt(0);
+
+            sheetA.getRow(7).getCell(22).setCellValue(complaint.getCompNumber());
+            sheetA.getRow(7).getCell(34).setCellValue(complaint.getCompDate().format(dtf));
+            sheetA.getRow(16).getCell(5).setCellValue(contract.getContractName());
+            sheetA.getRow(17).getCell(5).setCellValue(contract.getContractName());
+            sheetA.getRow(16).getCell(43).setCellValue(contract.getContractNumber() + " от/from " + contract.getDate().format(dtf));
+            sheetA.getRow(20).getCell(6).setCellValue(complaint.getInvoice());
+            if(complaint.getShippingDate() != null) {
+                sheetA.getRow(20).getCell(20).setCellValue(complaint.getShippingDate().format(dtf));
+                sheetA.getRow(47).getCell(22).setCellValue(complaint.getInvoice() + " от/from " + complaint.getShippingDate().format(dtf));
+            }
+            if(complaint.getDeliveryDate() != null) {
+                sheetA.getRow(20).getCell(32).setCellValue(complaint.getDeliveryDate().format(dtf));
+            }
+            sheetA.getRow(20).getCell(44).setCellValue(complaint.getDetectionDate().format(dtf));
+            sheetA.getRow(22).getCell(8).setCellValue(cellValuePartName);
+            sheetA.getRow(22).getCell(31).setCellValue(complaint.getPartNumber());
+            sheetA.getRow(22).getCell(45).setCellValue(complaint.getDefectQuantity());
+            sheetA.getRow(25).getCell(45).setCellValue(complaint.getRelNotList().get(0));
+            sheetA.getRow(24).getCell(8).setCellValue(complaint.getDeviationDescriptionRu());
+            sheetA.getRow(26).getCell(8).setCellValue(complaint.getDeviationDescriptionEn());
+            sheetA.getRow(28).getCell(8).setCellValue(contract.getContractName());
+            sheetA.getRow(47).getCell(3).setCellValue(complaint.getPartNumber());
+            sheetA.getRow(47).getCell(8).setCellValue(cellValuePartName);
+            sheetA.getRow(47).getCell(27).setCellValue(complaint.getDefectQuantity());
+
+            //Блок вставки имён
+            XSSFRichTextString cellValueQualityResp = new XSSFRichTextString();
+            cellValueQualityResp.append(employees.get(contract.getEmployeeIdQuality()).getSurnameRu() + " " + employees.get(contract.getEmployeeIdQuality()).getNameRu());
+            cellValueQualityResp.append("\n" + employees.get(contract.getEmployeeIdQuality()).getSurnameEn() + " " + employees.get(contract.getEmployeeIdQuality()).getNameEn(), fontItalic);
+            XSSFRichTextString cellValueExtlogResp = new XSSFRichTextString();
+            cellValueExtlogResp.append(employees.get(contract.getEmployeeId()).getSurnameRu() + " " + employees.get(contract.getEmployeeId()).getNameRu());
+            cellValueExtlogResp.append("\n" + employees.get(contract.getEmployeeId()).getSurnameEn() + " " + employees.get(contract.getEmployeeId()).getNameEn(), fontItalic);
+            XSSFRichTextString cellValueControlResp = new XSSFRichTextString();
+            cellValueControlResp.append(employees.get("z298410").getSurnameRu() + " " + employees.get("z298410").getNameRu());
+            cellValueControlResp.append("\n" + employees.get("z298410").getSurnameEn() + " " + employees.get("z298410").getNameEn(), fontItalic);
+            sheetA.getRow(35).getCell(24).setCellValue(cellValueQualityResp);
+            sheetA.getRow(61).getCell(24).setCellValue(cellValueExtlogResp);
+            sheetA.getRow(63).getCell(24).setCellValue(cellValueControlResp);
+            //Конец блока вставки имён
+
+            File folder = new File(complaintPath.getParent().toString());
+            folder.mkdirs();
+            FileOutputStream fileOut = new FileOutputStream(complaintPath.toFile());
+            wbComplBlank.write(fileOut);
+            wbComplBlank.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void insertComplaintDB(List<Complaint> complaints){
+        Complaint complaint = complaints.get(0);
+        try(Connection connection = conManager.getConnection()){
+            logger.info("============ insertComplaintDB(Complaint complaint)");
+            try(PreparedStatement statement = connection.prepareStatement("INSERT INTO complaints (compDate, compNumber, relNotList ) VALUES (?, ?, ?)")) {
+                statement.setDate(1, Date.valueOf(complaint.getCompDate()));
+                statement.setString(2, complaint.getCompNumber());
+                StringBuilder relNotList = new StringBuilder();
+                for(int i : complaint.getRelNotList()){
+                    relNotList.append(i);
+                    relNotList.append(", \n");
+                }
+                statement.setString(3, relNotList.toString());
+                logger.info(statement.executeUpdate());
+            }
+        } catch (SQLException e) {
+            logger.info(e);
+        }
+
     }
 }

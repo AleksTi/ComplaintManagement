@@ -2,21 +2,19 @@ package ru.yandex.sashanc.services;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import ru.yandex.sashanc.db.*;
 import ru.yandex.sashanc.pojo.*;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ComplaintService implements IComplaintService {
     private static final Logger logger = Logger.getLogger(ComplaintService.class);
@@ -24,104 +22,62 @@ public class ComplaintService implements IComplaintService {
     /**
      * Метод создаёт новый рекламационный акт из данных сообщения
      */
-    public void generateComplaint(Notification not, String descriptionRu, String descriptionEn, LocalDate complaintDate, boolean imageAdd, String complaintType, List<File> imageFileList){
+    @Override
+    public List<Complaint> generateComplaint(List<Notification> notList, String descriptionRu, String descriptionEn, LocalDate complaintDate, boolean imageAdd, String complaintType, List<File> imageFileList) {
         logger.info("Method generateComplaint is launched...");
+        List<Complaint> complaints = new CopyOnWriteArrayList<>();
+        IEmployeeDao employeeDao = new EmployeeDaoImpl();
         IComplaintDao complaintDao = new ComplaintDaoImpl();
-        String newComplaintNumber = getNewComplaintNumberDraft(not.getSupplierNumber(), complaintType);
-
-        Complaint complaint = new Complaint();
-        complaintDao.getComplaintData(complaint);
-
-        IPartDao partDao = new PartDaoImpl();
-        Part part = partDao.getContractPart(not.getSupplierNumber(), not.getMaterialNumber());
-
         IContractDao contractDao = new ContractDaoImpl();
-        Contract contract = contractDao.getContract(not.getSupplierNumber());
+        IPartDao partDao = new PartDaoImpl();
 
-        EmployeeDaoImpl employeeDao = new EmployeeDaoImpl();
         Map<String, Employee> employees = employeeDao.getEmployeeList();
+        Contract contract = contractDao.getContract(notList.get(0).getSupplierNumber());
+        String complaintNumber = getNewComplaintNumberDraft(notList.get(0).getSupplierNumber(), complaintType);
+        Path complaintPath = Paths.get(complaintDao.getComplaintsPath(notList.get(0).getSupplierNumber()).toString()
+                + "\\" + complaintNumber + "\\" + complaintNumber + ".xlsx");
+        logger.info("Полное Имя нового рекламационного акта " + complaintPath);
 
-        Path newComplaintPath = complaintDao.getNewComplaintPath(not.getSupplierNumber(), newComplaintNumber);
-        logger.info("Имя нового рекламационного акта " + newComplaintPath);
 
-        InputStream complBlank = getClass().getResourceAsStream("/blanks/blank_complaint.xlsx");
-        try (XSSFWorkbook wbComplBlank = new XSSFWorkbook(complBlank)) {
-            XSSFFont fontItalic = wbComplBlank.createFont();
-            fontItalic.setItalic(true);
-            fontItalic.setFontName("Times New Roman");
-            fontItalic.setFontHeightInPoints((short) 14);
-            XSSFRichTextString cellValuePartName = new XSSFRichTextString();
-            cellValuePartName.append(part.getPartNameRu());
-            cellValuePartName.append("\n" + part.getPartNameEn().toUpperCase(), fontItalic);
-            XSSFSheet sheetA = wbComplBlank.getSheetAt(0);
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-            sheetA.getRow(7).getCell(22).setCellValue(newComplaintNumber);
-            sheetA.getRow(7).getCell(34).setCellValue(complaintDate.format(dtf));
-            sheetA.getRow(16).getCell(5).setCellValue(contract.getContractName());
-            sheetA.getRow(17).getCell(5).setCellValue(contract.getContractName());
-            sheetA.getRow(16).getCell(43).setCellValue(contract.getContractNumber() + " от/from " + contract.getDate().format(dtf));
-            sheetA.getRow(20).getCell(6).setCellValue(not.getInvoice());
-            if(not.getDeliveryNoteDate() != null) {
-                sheetA.getRow(20).getCell(20).setCellValue(not.getDeliveryNoteDate().format(dtf));
-                sheetA.getRow(47).getCell(22).setCellValue(not.getInvoice() + " от/from " + not.getDeliveryNoteDate().format(dtf));
+        String invoice;
+        boolean isNotAdded;
+        String deviationDescSap;
+
+        for (Notification not : notList) {
+            isNotAdded = false;
+            deviationDescSap = "";
+            invoice = "";
+            if (not.getDefectDescription() != null) {
+                deviationDescSap = not.getDefectDescription();
             }
-            if(not.getPostDate() != null) {
-                sheetA.getRow(20).getCell(32).setCellValue(not.getPostDate().format(dtf));
+            if (not.getInvoice() != null) {
+                invoice = not.getInvoice();
             }
-            sheetA.getRow(20).getCell(44).setCellValue(not.getNotDate().format(dtf));
-            sheetA.getRow(22).getCell(8).setCellValue(cellValuePartName);
-            sheetA.getRow(47).getCell(8).setCellValue(cellValuePartName);
-            sheetA.getRow(22).getCell(31).setCellValue(not.getMaterialNumber());
-            sheetA.getRow(22).getCell(45).setCellValue(not.getComplaintQuantity());
-            sheetA.getRow(25).getCell(45).setCellValue(not.getNotId());
-            if(descriptionRu.equals("")){
-                sheetA.getRow(24).getCell(8).setCellValue(not.getDefectDescription());
-            } else {
-                sheetA.getRow(24).getCell(8).setCellValue(descriptionRu);
+            for (Complaint com : complaints) {
+                if (not.getMaterialNumber().equals(com.getPartNumber()) && invoice.equals(com.getInvoice()) &&
+                        deviationDescSap.equals(com.getDeviationDescriptionSap())) {
+                    com.setDefectQuantity(com.getDefectQuantity() + not.getComplaintQuantity());
+                    com.setDefectQuantityToPpm(com.getDefectQuantityToPpm() + not.getComplaintQuantity());
+                    com.getRelNotList().add(not.getNotId());
+                    isNotAdded = true;
+                }
             }
-            if(descriptionEn.equals("")){
-                sheetA.getRow(26).getCell(8).setCellValue("n/a");
-            } else {
-                sheetA.getRow(26).getCell(8).setCellValue(descriptionEn);
+            if(!isNotAdded){
+                Part part = partDao.getContractPart(not.getSupplierNumber(), not.getMaterialNumber());
+                complaints.add(createComplaint(not, complaintNumber, complaintDate, part, descriptionRu, descriptionEn, contract));
             }
-            sheetA.getRow(28).getCell(8).setCellValue(contract.getContractName());
-            sheetA.getRow(47).getCell(3).setCellValue(not.getMaterialNumber());
-            sheetA.getRow(47).getCell(8).setCellValue(not.getMaterialDesSap());
-            sheetA.getRow(47).getCell(27).setCellValue(not.getComplaintQuantity());
-
-
-            //Блок вставки имён
-            XSSFRichTextString cellValueQualityResp = new XSSFRichTextString();
-            cellValueQualityResp.append(employees.get(contract.getEmployeeIdQuality()).getSurnameRu() + " " + employees.get(contract.getEmployeeIdQuality()).getNameRu());
-            cellValueQualityResp.append("\n" + employees.get(contract.getEmployeeIdQuality()).getSurnameEn() + " " + employees.get(contract.getEmployeeIdQuality()).getNameEn(), fontItalic);
-            XSSFRichTextString cellValueExtlogResp = new XSSFRichTextString();
-            cellValueExtlogResp.append(employees.get(contract.getEmployeeId()).getSurnameRu() + " " + employees.get(contract.getEmployeeId()).getNameRu());
-            cellValueExtlogResp.append("\n" + employees.get(contract.getEmployeeId()).getSurnameEn() + " " + employees.get(contract.getEmployeeId()).getNameEn(), fontItalic);
-            XSSFRichTextString cellValueControlResp = new XSSFRichTextString();
-            cellValueControlResp.append(employees.get("z298410").getSurnameRu() + " " + employees.get("z298410").getNameRu());
-            cellValueControlResp.append("\n" + employees.get("z298410").getSurnameEn() + " " + employees.get("z298410").getNameEn(), fontItalic);
-            sheetA.getRow(35).getCell(24).setCellValue(cellValueQualityResp);
-            sheetA.getRow(61).getCell(24).setCellValue(cellValueExtlogResp);
-            sheetA.getRow(63).getCell(24).setCellValue(cellValueControlResp);
-            //Конец блока вставки имён
-
-            File folder = new File(newComplaintPath.getParent().toString());
-            folder.mkdirs();
-            FileOutputStream fileOut = new FileOutputStream(newComplaintPath.toFile());
-            wbComplBlank.write(fileOut);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        if(imageAdd){
+        complaintDao.insertDataComplaintExcel(complaints, contract, employees, complaintPath);
+        if (imageAdd) {
             ImageService imageService = new ImageService();
-            imageService.inputImageToSheet(newComplaintPath, imageFileList, not.getNotId());
+            imageService.inputImageToSheet(complaintPath, imageFileList, notList.get(0).getNotId());
         }
+        complaintDao.insertComplaintDB(complaints);
+        return complaints;
     }
 
     /**
-     * Метод возвращает имя для нового рекламационного акта
+     * Метод возвращает имя для нового рекламационного акта (сначала проверяет в БД РА, если там нет, то присваевает новый номер)
      * */
     private String getNewComplaintNumber(int supplierNumber, String complaintType){
         logger.info("Method getNewComplaintNumber(int supplierNumber, String complaintType) is launched...");
@@ -165,6 +121,10 @@ public class ComplaintService implements IComplaintService {
         return  stringBuilder.toString();
     }
 
+    private String getShortNewComplNumberDraft(int supplierNumber, String complaintType){
+        return getNewComplaintNumber(supplierNumber, complaintType) + "_DRAFT";
+    }
+
     /**
      * Метод возвращает имя-ЧЕРНОВИК для нового рекламационного акта
      * */
@@ -172,12 +132,60 @@ public class ComplaintService implements IComplaintService {
         StringBuilder stringBuilder = new StringBuilder();
         DateTimeFormatter dtfDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         DateTimeFormatter dtfTime = DateTimeFormatter.ofPattern("HH-mm-ss");
-
-        stringBuilder.append(getNewComplaintNumber(supplierNumber, complaintType));
-        stringBuilder.append("_DRAFT_");
+        stringBuilder.append(getShortNewComplNumberDraft(supplierNumber, complaintType));
+        stringBuilder.append("_");
         stringBuilder.append(LocalDate.now().format(dtfDate));
         stringBuilder.append("_");
         stringBuilder.append(LocalDateTime.now().format(dtfTime));
         return stringBuilder.toString();
+    }
+
+    private Complaint createComplaint(Notification not, String complaintNumber, LocalDate complaintDate,
+                                      Part part, String descriptionRu, String descriptionEn, Contract contract){
+        Complaint complaint = new Complaint();
+        complaint.setPartNumber(part.getPartNumber());
+        complaint.setPartNameRu(part.getPartNameRu());
+        complaint.setPartNameEn(part.getPartNameEn());
+        complaint.setRelNotList(new ArrayList<>());
+        complaint.getRelNotList().add(not.getNotId());
+        complaint.setCompNumber(complaintNumber);
+        complaint.setCompDate(complaintDate);
+        complaint.setSupplierId(not.getSupplierNumber());
+        complaint.setStatus("DRAFT");
+        //TODO Сделать выпадающий список для определения места возникновения
+        complaint.setPlaceDetected("");
+        complaint.setDefectQuantity(not.getComplaintQuantity());
+        //TODO Сделать отдельное получение количества для PPM
+        complaint.setDefectQuantityToPpm(not.getComplaintQuantity());
+        if (descriptionRu.equals("")) {
+            complaint.setDeviationDescriptionRu(not.getDefectDescription());
+        } else {
+            complaint.setDeviationDescriptionRu(descriptionRu);
+        }
+        if (descriptionEn.equals("")) {
+            complaint.setDeviationDescriptionEn("n/a");
+        } else {
+            complaint.setDeviationDescriptionEn(descriptionEn);
+        }
+        //TODO Указать имя папки, где будет создан РА Excel
+        complaint.setLink("");
+        if (not.getInvoice() != null) {
+            complaint.setInvoice(not.getInvoice());
+        } else {
+            complaint.setInvoice("");
+        }
+        if (not.getDefectDescription() != null) {
+            complaint.setDeviationDescriptionSap(not.getDefectDescription());
+        } else {
+            complaint.setDeviationDescriptionSap("");
+        }
+        complaint.setShippingDate(not.getDeliveryNoteDate());
+        complaint.setDeliveryDate(not.getPostDate());
+        complaint.setDetectionDate(not.getNotDate());
+        //TODO Продумать механизм работы с затратами
+        complaint.setTotalCost(0.0);
+        complaint.setCompContract(contract.getContractNumber());
+        complaint.setCompContractDate(contract.getDate());
+        return complaint;
     }
 }

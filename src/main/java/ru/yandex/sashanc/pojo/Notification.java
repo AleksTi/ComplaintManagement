@@ -1,5 +1,6 @@
 package ru.yandex.sashanc.pojo;
 
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
@@ -25,13 +26,13 @@ public class Notification {
     private LocalDate deliveryNoteDate;
     private LocalDate postDate;
     private String invoice;
-    private String imageLink;
+    private Path imageLink;
 
-    public String getImageLink() {
+    public Path getImageLink() {
         return imageLink;
     }
 
-    public void setImageLink(String imageLink) {
+    public void setImageLink(Path imageLink) {
         this.imageLink = imageLink;
     }
 

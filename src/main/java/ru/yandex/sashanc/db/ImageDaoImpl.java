@@ -4,8 +4,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import ru.yandex.sashanc.db.connection.ConnectionManagerImpl;
-import ru.yandex.sashanc.db.connection.IConnectionManager;
-import ru.yandex.sashanc.pojo.Notification;
 
 import java.io.File;
 import java.nio.file.Path;

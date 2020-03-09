@@ -1,9 +1,51 @@
 package ru.yandex.sashanc.pojo;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Complaint implements Cloneable {
+
+    public static Map<String, String> getColumnHeads() {
+        Map<String, String> columnHeads = new HashMap<>();
+        columnHeads.put("compDate", "Дата РА");
+        columnHeads.put("compNumber", "Номер РА");
+        columnHeads.put("relNotList", "Сообщения");
+        columnHeads.put("placeDetected", "Место обнаружения");
+        columnHeads.put("partNumber", "Номер детали");
+        columnHeads.put("partNameRu", "Наименование детали Ru");
+        columnHeads.put("partNameEn", "Наименование детали En");
+        columnHeads.put("defectQuantity", "Несоотв. кол-во");
+        columnHeads.put("defectQuantityToPpm", "Несоотв. кол-во PPM");
+        columnHeads.put("deviationDescriptionSap", "Описание несоотв. (SAP)");
+        columnHeads.put("deviationDescriptionRu", "Описание несоотв. (Ru)");
+        columnHeads.put("deviationDescriptionEn", "Описание несоотв. (En)");
+        columnHeads.put("link", "Ссылка");
+        columnHeads.put("invoice", "Инвойс");
+        columnHeads.put("shippingDate", "Дата отгр/инв");
+        columnHeads.put("deliveryDate", "Дата поставки");
+        columnHeads.put("detectionDate", "Дата обнаруж");
+        columnHeads.put("report8dReceived", "Дата получ 8D");
+        columnHeads.put("report8dClosed", "Дата закр 8D");
+        columnHeads.put("totalCost", "Сумма затрат");
+        columnHeads.put("extraDelivery", "Доп. поставка");
+        columnHeads.put("paymentDate", "Дата оплаты");
+        columnHeads.put("paidCost", "Возмещён. сумма");
+        columnHeads.put("decision", "Решение");
+        columnHeads.put("annotation", "Применание");
+        columnHeads.put("compContract", "Контракт");
+        columnHeads.put("compContractDate", "Дата контракта");
+        columnHeads.put("typeGB", "Тип КПП");
+        columnHeads.put("actions", "Действия");
+        columnHeads.put("partPrice", "Стоимость детали");
+        columnHeads.put("serviceCustomCost", "Затраты тамож.");
+        columnHeads.put("deliveryCost", "Затраты трансп.");
+        columnHeads.put("supplierId", "Id поставщика");
+        columnHeads.put("status", "Статус РА");
+        return columnHeads;
+    }
+
     //Property are used in report
     private LocalDate compDate;
     private String compNumber;
@@ -23,7 +65,7 @@ public class Complaint implements Cloneable {
     private LocalDate deliveryDate;
     private LocalDate detectionDate;
     private LocalDate report8dReceived;
-    private LocalDate getReport8dClosed;
+    private LocalDate report8dClosed;
     private double totalCost;
     private String extraDelivery;
     private LocalDate paymentDate;
@@ -35,11 +77,9 @@ public class Complaint implements Cloneable {
     private String compContract;
     private LocalDate compContractDate;
     private String typeGB;
-    private String action1;
-    private String action2;
-    private String action3;
+    private List<String> actions;
     private int partPrice;
-    private int serviceCost;
+    private int serviceCustomCost;
     private int deliveryCost;
 
     //Property for instance
@@ -102,12 +142,12 @@ public class Complaint implements Cloneable {
         this.report8dReceived = report8dReceived;
     }
 
-    public LocalDate getGetReport8dClosed() {
-        return getReport8dClosed;
+    public LocalDate getReport8dClosed() {
+        return report8dClosed;
     }
 
-    public void setGetReport8dClosed(LocalDate getReport8dClosed) {
-        this.getReport8dClosed = getReport8dClosed;
+    public void setReport8dClosed(LocalDate report8dClosed) {
+        this.report8dClosed = report8dClosed;
     }
 
     public double getTotalCost() {
@@ -286,28 +326,20 @@ public class Complaint implements Cloneable {
         this.relNotList = relNotList;
     }
 
-    public String getAction1() {
-        return action1;
+    public List<String> getActions() {
+        return actions;
     }
 
-    public void setAction1(String action1) {
-        this.action1 = action1;
+    public void setActions(List<String> actions) {
+        this.actions = actions;
     }
 
-    public String getAction2() {
-        return action2;
+    public int getServiceCustomCost() {
+        return serviceCustomCost;
     }
 
-    public void setAction2(String action2) {
-        this.action2 = action2;
-    }
-
-    public String getAction3() {
-        return action3;
-    }
-
-    public void setAction3(String action3) {
-        this.action3 = action3;
+    public void setServiceCustomCost(int serviceCustomCost) {
+        this.serviceCustomCost = serviceCustomCost;
     }
 
     public int getPartPrice() {
@@ -316,14 +348,6 @@ public class Complaint implements Cloneable {
 
     public void setPartPrice(int partPrice) {
         this.partPrice = partPrice;
-    }
-
-    public int getServiceCost() {
-        return serviceCost;
-    }
-
-    public void setServiceCost(int serviceCost) {
-        this.serviceCost = serviceCost;
     }
 
     public int getDeliveryCost() {

@@ -1,13 +1,11 @@
 package ru.yandex.sashanc.controllers;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -16,15 +14,11 @@ import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
 import ru.yandex.sashanc.db.ComplaintDaoImpl;
 import ru.yandex.sashanc.db.IComplaintDao;
-import ru.yandex.sashanc.db.NotificationDao;
-import ru.yandex.sashanc.db.connection.ConnectionManagerImpl;
-import ru.yandex.sashanc.db.connection.IConnectionManager;
 import ru.yandex.sashanc.pojo.Complaint;
 import ru.yandex.sashanc.pojo.Notification;
 import ru.yandex.sashanc.services.ComplaintService;
 import ru.yandex.sashanc.services.IComplaintService;
 import ru.yandex.sashanc.services.NotificationService;
-import ru.yandex.sashanc.services.Service;
 
 import java.awt.*;
 import java.io.File;
@@ -234,8 +228,8 @@ public class Controller {
         for (Field field : fields) {
             TableColumn tableColumn = new TableColumn();
             tableColumn.setId(field.getName());
-            tableColumn.setText(field.getName());
-            tableColumn.setMaxWidth(500);
+            tableColumn.setText(Complaint.getColumnHeads().get(field.getName()));
+            tableColumn.setPrefWidth(150);
             tableColumn.setEditable(true);
             tableColumn.setCellValueFactory(new PropertyValueFactory(field.getName()));
             logger.info("Complaint field.getName() = " + field.getName());

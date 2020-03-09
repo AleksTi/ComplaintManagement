@@ -1,26 +1,19 @@
 package ru.yandex.sashanc.db;
 
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.cell.PropertyValueFactory;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.*;
 import ru.yandex.sashanc.db.connection.ConnectionManagerImpl;
-import ru.yandex.sashanc.db.connection.IConnectionManager;
 import ru.yandex.sashanc.pojo.Complaint;
 import ru.yandex.sashanc.pojo.Contract;
 import ru.yandex.sashanc.pojo.Employee;
 import ru.yandex.sashanc.pojo.Property;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
+import java.sql.*;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -420,6 +413,5 @@ public class ComplaintDaoImpl implements IComplaintDao {
         } catch (SQLException e) {
             logger.info(e);
         }
-
     }
 }

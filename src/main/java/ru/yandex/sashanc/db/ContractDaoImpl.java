@@ -2,7 +2,6 @@ package ru.yandex.sashanc.db;
 
 import org.apache.log4j.Logger;
 import ru.yandex.sashanc.db.connection.ConnectionManagerImpl;
-import ru.yandex.sashanc.db.connection.IConnectionManager;
 import ru.yandex.sashanc.pojo.Contract;
 
 import java.sql.Connection;

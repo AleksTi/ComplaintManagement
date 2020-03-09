@@ -1,4 +1,4 @@
-package ru.yandex.sashanc.db.connection;
+package ru.yandex.sashanc.db;
 
 import java.sql.Connection;
 

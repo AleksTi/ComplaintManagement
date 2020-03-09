@@ -2,6 +2,7 @@ package ru.yandex.sashanc.db.connection;
 
 import org.apache.log4j.Logger;
 import ru.yandex.sashanc.Main;
+import ru.yandex.sashanc.db.IConnectionManager;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

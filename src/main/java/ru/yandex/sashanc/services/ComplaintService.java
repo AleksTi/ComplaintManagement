@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import ru.yandex.sashanc.db.*;
 import ru.yandex.sashanc.pojo.*;
 
-import java.io.*;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -34,8 +34,9 @@ public class ComplaintService implements IComplaintService {
         Map<String, Employee> employees = employeeDao.getEmployeeList();
         Contract contract = contractDao.getContract(notList.get(0).getSupplierNumber());
         String complaintNumber = getNewComplaintNumberDraft(notList.get(0).getSupplierNumber(), complaintType);
-        Path complaintPath = Paths.get(complaintDao.getComplaintsPath(notList.get(0).getSupplierNumber()).toString()
-                + "\\" + complaintNumber + "\\" + complaintNumber + ".xlsx");
+        Path complaintsPath = complaintDao.getComplaintsPath(notList.get(0).getSupplierNumber());
+        String complaintPathStr = complaintsPath.toString() + "\\" + complaintNumber;
+        Path complaintPath = Paths.get(complaintPathStr + "\\" + complaintNumber + ".xlsx");
         logger.info("Полное Имя нового рекламационного акта " + complaintPath);
 
 
@@ -73,6 +74,7 @@ public class ComplaintService implements IComplaintService {
             imageService.inputImageToSheet(complaintPath, imageFileList, notList.get(0).getNotId());
         }
         complaintDao.insertComplaintDB(complaints);
+        new LetterInfoService().createLetter(notList, Paths.get(complaintPathStr));
         return complaints;
     }
 
